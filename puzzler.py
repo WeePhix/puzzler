@@ -62,7 +62,7 @@ class Player(Sprite):
     
     def update(self):        
         if self.moving:
-            if self.rect.collidelist(collidables) != self.index and not self.movingBack or (self.rect.collidelist(doorList) != -1 and doorList[self.rect.collidelist(doorList)].type == 'door_closed'):
+            if self.rect.collidelist(collidables) != self.index and not self.movingBack or (self.rect.collidelist(doorList) != -1 and doorList[self.rect.collidelist(doorList)].type == 'door_closed') or (self.rect.collidelist(crackedList) != -1 and crackedList[self.rect.collidelist(crackedList)].type == 'broken'):
                 self.movingBack = True
             if self.movingBack:
                 self.moveBack()
@@ -198,6 +198,32 @@ class Door(Sprite):
             self.type = 'door_closed'
             self.closing = False
 
+class Cracked(Sprite):
+    def __init__(self, coords, broken):
+        Sprite.__init__(self, 'graphics/cracked_tile.png', tileSize, tileSize, coords)
+        self.images = [self.image, pygame.transform.scale(pygame.image.load('graphics/broken_tile.png'), (tileSize, tileSize)), pygame.transform.scale(pygame.image.load('graphics/filled_tile.png'), (tileSize, tileSize))]
+
+        self.coords = coords
+        self.breaking = False
+        self.type = 'cracked' * (not broken) + 'broken' * broken
+        self.image = self.images[broken]
+        
+    def update(self):
+        if self.type == 'filled':
+            return 0
+        
+        if self.rect.collidelist(boxList) != -1:
+            self.type = 'filled'
+            del boxList[self.rect.collidelist(boxList)]
+            self.image = self.images[2]
+        
+        if self.type == 'cracked' and self.rect.colliderect(player.rect):
+            self.breaking = True
+        
+        if self.breaking and not self.rect.colliderect(player.rect):
+            self.type = 'broken'
+            self.image = self.images[1]
+            
 
 
 def textToTiles(text):
@@ -210,6 +236,8 @@ def textToTiles(text):
             x = -1
         elif ch == '#':
             wallList.append(Wall((x, y)))
+        elif ch == 'X':
+            crackedList.append(Cracked((x, y), metadata[y][x]))
         else:
             if ch == 'b':
                 boxList.append(Box((x, y)))
@@ -228,7 +256,7 @@ def textToTiles(text):
 
 
 def loadLevel(text):
-    global goal, player, boxList, doorList, wallList, floorList, buttonList, globalMovement, moveDir, screen, redActive, blueActive, greenActive, tileSize, tilesX, tilesY
+    global goal, player, boxList, doorList, wallList, floorList, buttonList, crackedList, globalMovement, moveDir, screen, redActive, blueActive, greenActive, tileSize, tilesX, tilesY
     goal = 0
     player = 0
     boxList = []
@@ -236,6 +264,7 @@ def loadLevel(text):
     wallList = []
     floorList = []
     buttonList = []
+    crackedList = []
     globalMovement = False
     tileSize = 80
     tilesX = tilesY = 9
@@ -248,15 +277,15 @@ def loadLevel(text):
 
 textLevel = '''#########
 #P  #   #
-# # #G# #
+#b# #G# #
 #B bB## #
-#D# #  b #
-# ##  # #
+#D#X#  b #
+#X##  # #
 #b   #  #
 # #b   ##
 ### #####'''
 
-metadata = [[0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, ['red', False], 0, 0, ['red', True], 0, 0, 0, 0], [0, 'red', 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0]]
+metadata = [[0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, ['red', False], 0, 0, ['red', True], 0, 0, 0, 0], [0, 'red', 0, True, 0, 0, 0, 0, 0], [0, False, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0]]
 
 pygame.init()
 clock = pygame.time.Clock()
@@ -270,7 +299,7 @@ while True:
         loadLevel(textLevel)
     buttonColorsActivity = {'red' : redActive, 'blue' : blueActive, 'green' : greenActive}
         
-    allTiles = {'floor' : floorList, 'wall' : wallList, 'button' : buttonList, 'box' : boxList, 'door' : doorList, 'goal' : [goal], 'player' : [player]}
+    allTiles = {'floor' : floorList, 'cracked' : crackedList, 'wall' : wallList, 'button' : buttonList, 'door' : doorList, 'box' : boxList, 'goal' : [goal], 'player' : [player]}
     collidables = allTiles['goal'] + allTiles['wall'] + allTiles['box']
     buttonables = allTiles['box'] + allTiles['player']
     
