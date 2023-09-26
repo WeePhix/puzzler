@@ -174,33 +174,35 @@ class Button(Sprite):
                 self.state = (self.state + 1) % 2
                 self.image = self.images[self.state]
         
-        buttonColorsActivity[self.color] = self.state
+        if self.state: buttonColorsActivity[self.color] = True
 
 class Door(Sprite):
     def __init__(self, coords, color):
-        print(color)
         Sprite.__init__(self, f'graphics/door/{color}.png', tileSize, tileSize, coords)
         self.images = [self.image, pygame.transform.scale(pygame.image.load(f'graphics/door/{color}_active.png').convert_alpha(), (tileSize, tileSize))]
         
         self.coords = coords
         self.color = color
         self.type = 'door_closed'
+        self.closing = False
     
     def update(self):
         if buttonColorsActivity[self.color]:
             self.image = self.images[1]
             self.type = 'door_open'
-            # self.rect.center = ((self.coords[0] + 0.5 + 15/16) * tileSize, (self.coords[1] + 0.5 + 15/16) * tileSize)
         else:
+            self.closing = True
+        
+        if self.closing and self.rect.collidelist([player] + boxList) == -1:
             self.image = self.images[0]
             self.type = 'door_closed'
-            # self.rect.center = ((self.coords[0] + 0.5) * tileSize, (self.coords[1] + 0.5) * tileSize)
-
+            self.closing = False
 
 
 
 def textToTiles(text):
     global player, goal
+    row = ''
     y = x = 0
     for ch in text:
         if ch == '\n':
@@ -218,59 +220,64 @@ def textToTiles(text):
             elif ch == 'B':
                 buttonList.append(Button((x, y), metadata[y][x][0], metadata[y][x][1]))
             elif ch == 'D':
-                print(metadata[y][x])
                 doorList.append(Door((x, y), metadata[y][x]))
             
             floorList.append(Floor((x, y)))
         
         x += 1
 
+
+def loadLevel(text):
+    global goal, player, boxList, doorList, wallList, floorList, buttonList, globalMovement, moveDir, screen, redActive, blueActive, greenActive, tileSize, tilesX, tilesY
+    goal = 0
+    player = 0
+    boxList = []
+    doorList = []
+    wallList = []
+    floorList = []
+    buttonList = []
+    globalMovement = False
+    tileSize = 80
+    tilesX = tilesY = 9
+    moveDir = 0
+    screen = pygame.display.set_mode((tileSize * tilesX, tileSize * tilesY))
+    redActive = blueActive = greenActive = False
+    
+    textToTiles(text)
+
+
 textLevel = '''#########
 #P  #   #
 # # #G# #
-#  bB## #
+#B bB## #
 #D# #  b #
 # ##  # #
 #b   #  #
 # #b   ##
 ### #####'''
 
-metadata = [[0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, ['red', False], 0, 0, 0, 0], [0, 'red', 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0]]
-
-tileSize = 80
-tilesX = tilesY = 9
-moveDir = 0
-globalMovement = False
+metadata = [[0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, ['red', False], 0, 0, ['red', True], 0, 0, 0, 0], [0, 'red', 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0]]
 
 pygame.init()
 clock = pygame.time.Clock()
-screen = pygame.display.set_mode((tileSize * tilesX, tileSize * tilesY))
-
-goal = 0
-player = 0
-boxList = []
-doorList = []
-wallList = []
-floorList = []
-buttonList = []
-
-redActive = blueActive = greenActive = False
 
 movementDict = {0 : (0, 0), pygame.K_w : (0, -1), pygame.K_s : (0, 1), pygame.K_a : (-1, 0), pygame.K_d : (1, 0), pygame.K_UP : (0, -1), pygame.K_DOWN : (0, 1), pygame.K_LEFT : (-1, 0), pygame.K_RIGHT : (1, 0)}
-buttonColorsActivity = {'red' : redActive, 'blue' : blueActive, 'green' : greenActive}
+shouldLoadLevel = True
 
-textToTiles(textLevel)
-
-toPrint = True
-
-while not player.gameWon:
+while True:
+    if shouldLoadLevel:
+        shouldLoadLevel = False
+        loadLevel(textLevel)
+    buttonColorsActivity = {'red' : redActive, 'blue' : blueActive, 'green' : greenActive}
+        
     allTiles = {'floor' : floorList, 'wall' : wallList, 'button' : buttonList, 'box' : boxList, 'door' : doorList, 'goal' : [goal], 'player' : [player]}
     collidables = allTiles['goal'] + allTiles['wall'] + allTiles['box']
     buttonables = allTiles['box'] + allTiles['player']
     
     for i in range(len(collidables)):
         collidables[i].index = i    
-    
+    for key in buttonColorsActivity:
+        buttonColorsActivity[key] = False
     for tileType in allTiles:
         for tile in allTiles[tileType]:
             tile.update()
@@ -293,10 +300,15 @@ while not player.gameWon:
         elif event.type == pygame.KEYUP:
             if event.key == moveDir:
                 moveDir = 0
+            if event.key == pygame.K_r:
+                shouldLoadLevel = True
         
         elif event.type == pygame.KEYDOWN and globalMovement == 0:
             if event.key in [pygame.K_w, pygame.K_s, pygame.K_a, pygame.K_d, pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT]:
                 moveDir = event.key
+    
+    if player.gameWon:
+        break
 
 screen.fill('dark green')
 pygame.display.update()
