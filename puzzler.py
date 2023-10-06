@@ -1,6 +1,12 @@
 import pygame
 from sys import exit
 
+class Game():
+    def __init__(self) -> None:
+        self.tileScreenSize = 80
+    
+    def run(self):
+        pass
 
 class Sprite():
     def __init__(self, imgPath, sizeX, sizeY, coords):
@@ -152,9 +158,9 @@ class Goal(Sprite):
 
 class Button(Sprite):
     def __init__(self, coords, color, lever):
-        Sprite.__init__(self, f'graphics/button/{color}_{lever * "lever" + (not lever) * "button"}.png', tileSize*7/8, tileSize*7/8, coords)
+        Sprite.__init__(self, f'graphics/{lever * "lever" + (not lever) * "button"}/{color}.png', tileSize*7/8, tileSize*7/8, coords)
         
-        self.images = [self.image, pygame.transform.scale(pygame.image.load(f'graphics/button/{color}_{lever * "lever" + (not lever) * "button"}_active.png').convert_alpha(), (tileSize*7/8, tileSize*7/8))]
+        self.images = [self.image, pygame.transform.scale(pygame.image.load(f'graphics/{lever * "lever" + (not lever) * "button"}/{color}_on.png').convert_alpha(), (tileSize*7/8, tileSize*7/8))]
         self.state = 0
         self.activated = False
         

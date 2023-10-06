@@ -1,0 +1,78 @@
+import pygame
+
+images = {'wall' : [pygame.image.load("../graphics/basic/wall.png")],
+          'floor' : [pygame.image.load("../graphics/basic/floor")],
+          'cracked' : [pygame.image.load("../graphics/basic/cracked0.png"), pygame.image.load("../graphics/basic/cracked1.png"), pygame.image.load("../graphics/basic/cracked2.png")],
+          'crate' : [pygame.image.load("../graphics/basic/crate.png")],
+          'goal' : [pygame.image.load('../graphics/basic/goal.png')],
+          'button' : {'red' : [pygame.image.load('../graphics/buttons/red0.png'), pygame.image.load('../graphics/buttons/red1.png')],
+                      'blue' : [pygame.image.load('../graphics/buttons/blue0.png'), pygame.image.load('../graphics/buttons/blue1.png')],
+                      'green' : [pygame.image.load('../graphics/buttons/green0.png'), pygame.image.load('../graphics/buttons/green1.png')]},
+          'lever' : {'red' : [pygame.image.load('../graphics/levers/red0.png'), pygame.image.load('../graphics/levers/red1.png')],
+                      'blue' : [pygame.image.load('../graphics/levers/blue0.png'), pygame.image.load('../graphics/levers/blue1.png')],
+                      'green' : [pygame.image.load('../graphics/levers/green0.png'), pygame.image.load('../graphics/levers/green1.png')]},
+          'door' : {'red' : [pygame.image.load('../graphics/doors/red0.png'), pygame.image.load('../graphics/doors/red1.png')],
+                      'blue' : [pygame.image.load('../graphics/doors/blue0.png'), pygame.image.load('../graphics/doors/blue1.png')],
+                      'green' : [pygame.image.load('../graphics/doors/green0.png'), pygame.image.load('../graphics/doors/green1.png')]},
+          'player' : [[], [], [], []]}
+
+class Sprite():
+    def __init__(self, game, coords) -> None:
+        self.game = game
+        
+        self.images = images
+        
+        
+        self.image = self.images[0]
+        self.rect = self.image.get_rect()
+        self.rect.center = ((coords[0] + 0.5) * game.tileScreenSize, (coords[1] + 0.5) * game.tileScreenSize)
+        
+        if self.__class__.__name__ == 'Wall':
+            self.type = 'wall'
+            dimensions = (game.tileScreenSize, game.tileScreenSize)
+        elif self.__class__.__name__ == 'Floor':
+            self.type = 'floor'
+            dimensions = (game.tileScreenSize, game.tileScreenSize)
+        elif self.__class__.__name__ == 'Crate':
+            self.type = 'crate'
+            dimensions = (game.tileScreenSize * 7 / 8, game.tileScreenSize * 7 / 8)
+        elif self.__class__.__name__ == 'Button':
+            self.type = 'button'
+            dimensions = (game.tileScreenSize * 7 / 8, game.tileScreenSize * 7 / 8)
+        elif self.__class__.__name__ == 'Lever':
+            self.type = 'lever'
+            dimensions = (game.tileScreenSize * 7 / 8, game.tileScreenSize * 7 / 8)
+        elif self.__class__.__name__ == 'Door':
+            self.type = 'door'
+            dimensions = (game.tileScreenSize, game.tileScreenSize)
+        elif self.__class__.__name__ == 'Player':
+            self.type = 'player'
+            dimensions = (game.tileScreenSize * 3 / 4, game.tileScreenSize * 3 / 4)
+        elif self.__class__.__name__ == 'Goal':
+            self.type = 'goal'
+            dimensions = (game.tileScreenSize, game.tileScreenSize)
+            
+        for i in range(len(self.images)):
+            if type(self.images) == type([]):
+                for j in range(len(self.images)):
+                    self.images[i][j] = pygame.transform.scale(self.image[i][j], dimensions).convert_alpha()
+            else:
+                self.images[i] = pygame.transform.scale(self.image[i][j], dimensions).convert_alpha()
+    
+    def animate(self):
+        pass
+    
+    def draw(self):
+        self.game.screen.blit(self.image, self.rect)
+    
+    def playerMove(self, moveDir):
+        pass
+        
+    def update(self):
+        pass
+
+
+
+class Wall(Sprite):
+    def __init__(self, game, coords) -> None:
+        super().__init__(game, coords, game.tileScreenSize,)
