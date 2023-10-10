@@ -3,8 +3,11 @@ from sys import exit
 
 class Game():
     def __init__(self) -> None:
-        self.tileScreenSize = 80
-    
+        
+        self.tileScreenSize = False # The amount of screen pixels per tile length/height
+        self.screen = False         # The pygame.display object 
+        self.tileset = False        # A 2D array of all tiles
+        
     def run(self):
         pass
 
@@ -17,10 +20,7 @@ class Sprite():
         
         self.rect = self.image.get_rect()
         self.rect.center = ((coords[0] + 0.5) * tileSize, (coords[1] + 0.5) * tileSize)
-    
-    def update(self):
-        if self.rect.colliderect(player.rect): player.movingBack = True
-    
+        
     def draw(self):
         screen.blit(self.image, self.rect)
 
